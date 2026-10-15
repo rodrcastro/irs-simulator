@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f3d3e" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="IRS Sim" />
+<title>IRS Simulator · Portugal 2026 → 2027</title>
+<style>
+  :root {
+    --bg: #f5f6f4; --card: #fff; --ink: #1c2321; --muted: #5f6b68; --line: #e2e6e3;
+    --brand: #0f3d3e; --brand-2: #1f6f6b; --good: #1d7a46; --bad: #b3362b; --accent: #e9f3f1;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111615; --card: #1a2120; --ink: #e8edeb; --muted: #9aa6a3; --line: #2a3331;
+      --brand: #7cc8bf; --brand-2: #5fb3a9; --good: #5cc98a; --bad: #ef7d70; --accent: #1f2b29; }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); padding-bottom: env(safe-area-inset-bottom); }
+  header { background: var(--brand); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 14px; }
+  @media (prefers-color-scheme: dark) { header { background: #0c2a2a; } }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 2px 0 0; font-size: 12.5px; opacity: .8; }
+  main { max-width: 1100px; margin: 0 auto; padding: 12px; display: grid; gap: 12px; }
+  main > *, .panel > *, .kpis > * { min-width: 0; }
+  @media (min-width: 900px) { main { grid-template-columns: 340px 1fr; align-items: start; }
+    #inputs { position: sticky; top: 12px; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  details.card > summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details.card > summary::after { content: "▾"; color: var(--muted); }
+  details.card:not([open]) > summary::after { content: "▸"; }
+  .field { display: grid; gap: 4px; margin-top: 12px; }
+  .field > span { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+  input, select { font: inherit; font-size: 16px; /* prevents iOS zoom */ width: 100%; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); }
+  input:focus, select:focus { outline: 2px solid var(--brand-2); outline-offset: 1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .seg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14px;
+    padding: 8px 6px; border-radius: 8px; cursor: pointer; min-height: 38px; }
+  .seg button.on { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.15); font-weight: 600; }
+  .check { display: flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 14px; }
+  .check input { width: 20px; height: 20px; }
+  .hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: 6px 0; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 0 0 auto; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    font: inherit; font-size: 14px; padding: 9px 14px; border-radius: 999px; cursor: pointer; }
+  .tabs button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+  @media (prefers-color-scheme: dark) { .tabs button.on { color: #0c2a2a; } }
+  .panel { display: none; gap: 12px; }
+  .panel.on { display: grid; }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  h3 { font-size: 14px; margin: 14px 0 6px; color: var(--muted); font-weight: 600; }
+  .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  @media (min-width: 600px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+  .kpi { background: var(--accent); border-radius: 12px; padding: 10px 12px; }
+  .kpi .l { font-size: 12px; color: var(--muted); }
+  .kpi .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .kpi .s { font-size: 11.5px; color: var(--muted); }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  tr.sub td { font-size: 12px; color: var(--muted); border-bottom-style: dashed; padding-top: 3px; padding-bottom: 3px; }
+  tr.sub td:first-child { padding-left: 14px; }
+  tr.hl td { background: var(--accent); }
+  tr.total td { font-weight: 700; border-top: 2px solid var(--line); }
+  @media (max-width: 480px) { table { font-size: 12.5px; } th, td { padding: 6px 4px; } main { padding: 8px; } .card { padding: 12px; } }
+  .pos { color: var(--good); } .neg { color: var(--bad); }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--brand-2); color: #fff; vertical-align: 1px; }
+  .note { font-size: 12.5px; color: var(--muted); background: var(--accent); border-radius: 10px; padding: 10px 12px; margin-top: 10px; }
+  .callout { border-left: 4px solid var(--brand-2); padding: 10px 12px; background: var(--accent); border-radius: 0 10px 10px 0; margin-top: 10px; font-size: 14px; }
+  ul.src { padding-left: 18px; font-size: 13px; } ul.src li { margin: 4px 0; }
+  a { color: var(--brand-2); }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>IRS Simulator · Portugal</h1>
+  <p>2026 tables · November 2026 relief · 2027 brackets (OE2027)</p>
+</header>
+
+<main>
+  <details class="card" id="inputs" open>
+    <summary>Your situation</summary>
+
+    <label class="field"><span>Gross annual salary (€)</span>
+      <input id="gross" type="number" inputmode="decimal" min="0" step="100" value="30000" />
+    </label>
+    <p class="hint" id="grossHint"></p>
+
+    <div class="field"><span>Salary paid in</span>
+      <div class="seg" data-name="payments">
+        <button data-v="14" class="on">14 payments</button><button data-v="12">12 payments</button>
+      </div>
+    </div>
+
+    <label class="field"><span>Tax residence</span>
+      <select id="region">
+        <option value="mainland">Mainland Portugal (Continente)</option>
+        <option value="azores">Azores (Açores)</option>
+        <option value="madeira">Madeira</option>
+      </select>
+    </label>
+
+    <div class="field"><span>Marital status</span>
+      <div class="seg" data-name="status">
+        <button data-v="single" class="on">Single</button><button data-v="married">Married / civil union</button>
+      </div>
+    </div>
+
+    <div id="marriedBox" class="hide">
+      <label class="field"><span>Spouse's gross annual salary (€) — 0 if no income</span>
+        <input id="spouseGross" type="number" inputmode="decimal" min="0" step="100" value="0" />
+      </label>
+      <label class="field"><span>Tax return</span>
+        <select id="filing">
+          <option value="auto">Best option (auto)</option>
+          <option value="joint">Joint (tributação conjunta)</option>
+          <option value="separate">Separate (tributação separada)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="row2">
+      <label class="field"><span>Dependents</span>
+        <input id="dependents" type="number" inputmode="numeric" min="0" max="12" value="0" />
+      </label>
+      <label class="field"><span>…of which ≤ 6 years</span>
+        <input id="under6" type="number" inputmode="numeric" min="0" max="12" value="0" />
+      </label>
+    </div>
+
+    <label class="field"><span>IRS Jovem (age ≤ 35)</span>
+      <select id="jovemYear">
+        <option value="0">Not applicable</option>
+        <option value="1">Year 1 — 100% exempt</option>
+        <option value="2">Year 2 — 75%</option><option value="3">Year 3 — 75%</option><option value="4">Year 4 — 75%</option>
+        <option value="5">Year 5 — 50%</option><option value="6">Year 6 — 50%</option><option value="7">Year 7 — 50%</option>
+        <option value="8">Year 8 — 25%</option><option value="9">Year 9 — 25%</option><option value="10">Year 10 — 25%</option>
+      </select>
+    </label>
+    <p class="hint">Year of benefit in 2026. It moves up one year in 2027. Exemption is capped at 55 × IAS (€29,542 in 2026).</p>
+
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:14px;font-weight:600">More options (expenses, assumptions)</summary>
+      <label class="field"><span>Dependent ascendants (parents living with you)</span>
+        <input id="ascendants" type="number" inputmode="numeric" min="0" max="4" value="0" />
+      </label>
+      <label class="check"><input id="assumeGeneral" type="checkbox" checked /> Assume max. general family expenses deduction (€250 / €335 single parent)</label>
+      <div class="row2">
+        <label class="field"><span>Health expenses / yr (€)</span><input id="health" type="number" inputmode="decimal" min="0" value="0" /></label>
+        <label class="field"><span>Education / yr (€)</span><input id="education" type="number" inputmode="decimal" min="0" value="0" /></label>
+      </div>
+      <label class="field"><span>Rent of permanent home / yr (€)</span><input id="rent" type="number" inputmode="decimal" min="0" value="0" /></label>
+      <label class="field"><span>Holiday subsidy paid in</span>
+        <select id="holidayMonth"><option value="5">June</option><option value="6">July</option></select>
+      </label>
+      <div class="row2">
+        <label class="field"><span>Salary raise in 2027 (%)</span><input id="raise" type="number" inputmode="decimal" step="0.1" value="0" /></label>
+        <label class="field"><span>IAS 2027 (assumed €)</span><input id="ias2027" type="number" inputmode="decimal" step="0.01" value="552.17" /></label>
+      </div>
+      <p class="hint">The IAS for 2027 isn't published yet. It drives the 2027 specific deduction and IRS Jovem cap. Default assumes +2.8%, the same as 2026.</p>
+    </details>
+  </details>
+
+  <section>
+    <nav class="tabs" role="tablist">
+      <button data-tab="monthly" class="on">Monthly payslip</button>
+      <button data-tab="annual">Annual tax</button>
+      <button data-tab="compare">2026 vs 2027</button>
+      <button data-tab="brackets">Brackets &amp; sources</button>
+    </nav>
+
+    <div class="panel on" id="tab-monthly">
+      <div class="card">
+        <h2>Your 2026 payslip</h2>
+        <div class="kpis" id="monthlyKpis"></div>
+        <div class="callout" id="novCallout"></div>
+      </div>
+      <div class="card">
+        <h2>Month by month · 2026</h2>
+        <div class="scroll"><table id="payrollTable"></table></div>
+        <p class="hint" id="tableUsed"></p>
+      </div>
+      <div class="card">
+        <h2>Settlement in 2027 (IRS return for 2026)</h2>
+        <div id="settlement"></div>
+      </div>
+      <div class="card">
+        <h2>2027 payslip (estimate)</h2>
+        <div class="kpis" id="kpis2027"></div>
+        <p class="note">The 2027 withholding tables haven't been published yet. This estimate takes today's withholding for your salary and scales it by how much your annual IRS falls in 2027.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="tab-annual">
+      <div class="card">
+        <h2>Annual IRS calculation</h2>
+        <div class="seg" data-name="annualRegime">
+          <button data-v="2026-original">2026 original</button>
+          <button data-v="2026-revised" class="on">2026 + Nov. cut</button>
+          <button data-v="2027">2027</button>
+        </div>
+        <div class="kpis" id="annualKpis" style="margin-top:12px"></div>
+        <div id="filingBox"></div>
+        <h3>Step by step</h3>
+        <div class="scroll"><table id="annualSteps"></table></div>
+        <h3>Tax by bracket</h3>
+        <div class="scroll"><table id="annualBrackets"></table></div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab-compare">
+      <div class="card">
+        <h2>Annual comparison</h2>
+        <div class="scroll"><table id="compareAnnual"></table></div>
+        <p class="hint" id="compareHint"></p>
+      </div>
+      <div class="card">
+        <h2>Payslip comparison</h2>
+        <div class="scroll"><table id="comparePayslip"></table></div>
+      </div>
+      <div class="card">
+        <h2>Gain at other salary levels</h2>
+        <p class="hint" style="margin-top:0">Same household profile, single earner's gross annual salary.</p>
+        <div class="scroll"><table id="compareLevels"></table></div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab-brackets">
+      <div class="card">
+        <h2>IRS brackets — <span id="bracketRegion"></span></h2>
+        <div class="scroll"><table id="bracketTable"></table></div>
+        <p class="hint">Rates apply to taxable income (rendimento coletável). That's gross income minus the specific deduction, which is the larger of €4,587.09 or your Social Security contributions. Azores and Madeira apply a 30% reduction on mainland rates.</p>
+      </div>
+      <div class="card">
+        <h2>Key parameters</h2>
+        <div class="scroll"><table id="paramTable"></table></div>
+      </div>
+      <div class="card">
+        <h2>Assumptions &amp; limits</h2>
+        <ul class="src">
+          <li><b>November 2026 relief:</b> the cut of 0.3–0.5 p.p. on brackets 1–6 is retroactive to 1 Jan 2026. In November only, withholding on salary and the Christmas subsidy is cut by 50%. December goes back to the regular 2026 tables. The rest of the gain arrives with the 2027 IRS settlement.</li>
+          <li><b>2027:</b> uses the OE2027 proposal, with bracket limits +3.88% and the reduced rates kept. The final vote is expected on 24 Nov 2026, so values may still change. The specific deduction (8.54 × IAS) and IRS Jovem cap (55 × IAS) depend on the 2027 IAS, which is an editable assumption. Minimum existence is €13,580.</li>
+          <li><b>Regions:</b> monthly withholding uses the official 2026 regional tables (Despacho 1179/2026 for the Azores, Despacho 19/2026 for Madeira). Annual tax assumes the 30% regional reduction applies to the revised and 2027 rates as well.</li>
+          <li><b>IRS Jovem:</b> the exempt income still counts when setting the tax rate for the rest of your income. In the payslip, the exempt share of each payment is excluded from withholding.</li>
+          <li><b>Dependents:</b> €600 each. €726 if ≤ 6 years, rising to €900 from the second child ≤ 6. With 3+ dependents, withholding drops 1 p.p.</li>
+          <li><b>Married:</b> withholding uses Table III if the spouse has no income, otherwise Table I. With separate returns, dependent and expense deductions are split 50/50. Joint tax is attributed to each spouse in proportion to their taxable income.</li>
+          <li>Employees (Category A) only. Not modelled: disability tables, overtime, meal allowance, other income categories, NHR/IFICI, and the full art. 70 minimum-existence formula, which is approximated as "net income can't fall below the minimum".</li>
+          <li>This is an estimate. Your employer's payroll software and the official AT settlement may differ by a few euros.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Sources</h2>
+        <ul class="src">
+          <li><a href="https://www.pwc.pt/en/pwcinforfisco/tax-guide/2026/pit.html" target="_blank" rel="noopener">PwC — Tax Guide 2026, PIT</a></li>
+          <li><a href="https://www.noticiasaominuto.com/economia/3048591/salario-de-novembro-sera-mais-recheado-com-alivio-do-irs-para-quem" target="_blank" rel="noopener">Notícias ao Minuto — November salary relief</a></li>
+          <li><a href="https://eco.sapo.pt/2026/10/13/governo-reduz-tabelas-de-retencao-na-fonte-em-irs-em-50-a-partir-de-novembro/" target="_blank" rel="noopener">ECO — 50% withholding cut in November, new rates</a></li>
+          <li><a href="https://expresso.pt/orcamento-do-estado/orcamento-do-estado-2027/2026-10-08-em-novembro-baixam-as-taxas-em-janeiro-sobem-os-escaloes-em-388-veja-as-duas-novas-tabelas-de-irs-709be88c" target="_blank" rel="noopener">Expresso — the two new IRS tables</a></li>
+          <li><a href="https://eco.sapo.pt/2026/10/13/escaloes-de-irs-sobem-388-em-2027/" target="_blank" rel="noopener">ECO — 2027 brackets +3.88%</a></li>
+          <li><a href="https://contaspoupanca.pt/impostos/2026-10-10-oe2027-irs-salario-minimo-pensoes-e-casa.-o-que-preve-a-proposta-do-governo-12fb4180" target="_blank" rel="noopener">Contas Poupança — OE2027 (minimum existence €13,580)</a></li>
+          <li><a href="https://www.montepio.org/ei/pessoal/impostos/tabelas-do-irs-conheca-as-taxas-de-retencao-na-fonte/" target="_blank" rel="noopener">Montepio — 2026 mainland withholding tables</a></li>
+          <li><a href="https://files.diariodarepublica.pt/2s/2026/02/023000000/0005100057.pdf" target="_blank" rel="noopener">Despacho 1179/2026 — Azores withholding tables</a></li>
+          <li><a href="https://at.madeira.gov.pt/ficheiros/IISerie-013-2026-01-20Supl4.pdf" target="_blank" rel="noopener">Despacho 19/2026 — Madeira withholding tables</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="irs.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const eur = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' });
+  const eur0 = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  const fmt = (x) => eur.format(x || 0);
+  const fmt0 = (x) => eur0.format(x || 0);
+  // Table cells: no currency symbol (it's in the header) to fit phone screens
+  const nf = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const nf0 = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
+  const fmtN = (x) => nf.format(x || 0);
+  const fmtN0 = (x) => nf0.format(x || 0);
+  const signedN = (x) => {
+    const cls = x > 0.005 ? 'pos' : x < -0.005 ? 'neg' : '';
+    return `<span class="${cls}">${x > 0.005 ? '+' : ''}${fmtN(x)}</span>`;
+  };
+  const pct = (x) => (x * 100).toLocaleString('pt-PT', { maximumFractionDigits: 1 }) + '%';
+  const signed = (x) => {
+    const cls = x > 0.005 ? 'pos' : x < -0.005 ? 'neg' : '';
+    return `<span class="${cls}">${x > 0.005 ? '+' : ''}${fmt(x)}</span>`;
+  };
+  const REGION_NAMES = { mainland: 'Mainland', azores: 'Azores', madeira: 'Madeira' };
+
+  const segState = { payments: '14', status: 'single', annualRegime: '2026-revised' };
+  document.querySelectorAll('.seg').forEach((seg) => {
+    seg.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      seg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+      segState[seg.dataset.name] = b.dataset.v;
+      render();
+    });
+  });
+
+  document.querySelectorAll('.tabs button').forEach((b) =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+      document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.id === 'tab-' + b.dataset.tab));
+      if (matchMedia('(max-width: 899px)').matches) $('inputs').open = false;
+      b.scrollIntoView({ block: 'nearest', inline: 'center' });
+    })
+  );
+
+  document.querySelectorAll('#inputs input, #inputs select').forEach((el) => el.addEventListener('input', render));
+
+  const num = (id) => Math.max(0, parseFloat($(id).value) || 0);
+
+  function readProfile() {
+    const dependents = Math.floor(num('dependents'));
+    return {
+      gross: num('gross'),
+      payments: +segState.payments,
+      region: $('region').value,
+      status: segState.status,
+      spouseGross: num('spouseGross'),
+      filing: $('filing').value,
+      dependents,
+      under6: Math.min(dependents, Math.floor(num('under6'))),
+      ascendants: Math.floor(num('ascendants')),
+      jovemYear: +$('jovemYear').value,
+      assumeGeneral: $('assumeGeneral').checked,
+      health: num('health'),
+      education: num('education'),
+      rent: num('rent'),
+      holidayMonth: +$('holidayMonth').value,
+    };
+  }
+
+  function profile2027(p) {
+    const raise = 1 + (parseFloat($('raise').value) || 0) / 100;
+    return {
+      ...p,
+      gross: p.gross * raise,
+      spouseGross: p.spouseGross * raise,
+      jovemYear: p.jovemYear ? (p.jovemYear < 10 ? p.jovemYear + 1 : 0) : 0,
+    };
+  }
+
+  const kpi = (l, v, s = '') => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+
+  function render() {
+    const p = readProfile();
+    const ias27 = parseFloat($('ias2027').value) || 552.17;
+    const p27 = profile2027(p);
+    $('marriedBox').classList.toggle('hide', p.status !== 'married');
+    $('grossHint').textContent = `${fmt(p.gross / p.payments)} / month × ${p.payments}`;
+
+    const pay = IRS.payroll2026(p, true);
+    const payNoCut = IRS.payroll2026(p, false);
+    const t26o = IRS.annualTax(p, '2026-original', ias27);
+    const t26r = IRS.annualTax(p, '2026-revised', ias27);
+    const t27 = IRS.annualTax(p27, '2027', ias27);
+    const pay27 = IRS.payroll2027(p27, ias27);
+
+    renderMonthly(p, pay, payNoCut, t26r, pay27);
+    renderAnnual(p, p27, ias27);
+    renderCompare(p, p27, pay, payNoCut, t26o, t26r, t27, pay27, ias27);
+    renderBrackets(p, ias27);
+  }
+
+  function renderMonthly(p, pay, payNoCut, t26r, pay27) {
+    const reg = pay.rows[0];
+    const nov = pay.rows[10];
+    const novNoCut = payNoCut.rows[10];
+    $('monthlyKpis').innerHTML =
+      kpi('Gross / month', fmt(reg.gross), p.payments === 14 ? '+ holiday & Christmas subsidies' : '12 payments') +
+      kpi('IRS withheld', fmt(reg.irs), pct(reg.gross ? reg.irs / reg.gross : 0) + ' of gross') +
+      kpi('Social Security', fmt(reg.ss), '11% employee') +
+      kpi('Net / month', fmt(reg.net), 'Jan–Oct & Dec');
+
+    const novGain = nov.net - novNoCut.net;
+    $('novCallout').innerHTML = novGain > 0.005
+      ? `<b>November 2026:</b> withholding is cut by 50%${p.payments === 14 ? ' on your salary and Christmas subsidy' : ''}. You'll receive <b>${fmt(nov.net)}</b> net, which is <b class="pos">${fmt(novGain)}</b> more than under the normal tables.`
+      : `<b>November 2026:</b> no IRS is withheld at your income level, so the 50% November cut doesn't change your payslip.`;
+
+    let rows = '<thead><tr><th>Month</th><th>Gross €</th><th>SS €</th><th>IRS €</th><th>Net €</th></tr></thead><tbody>';
+    for (const r of pay.rows) {
+      const multi = r.items.length > 1;
+      rows += `<tr class="${r.novemberCut ? 'hl' : ''}"><td>${r.month}${r.novemberCut ? ' <span class="badge">−50% IRS</span>' : ''}</td>
+        <td>${fmtN(r.gross)}</td><td>${fmtN(r.ss)}</td><td>${fmtN(r.irs)}</td><td><b>${fmtN(r.net)}</b></td></tr>`;
+      if (multi) for (const it of r.items)
+        rows += `<tr class="sub"><td>${it.kind}</td><td>${fmtN(it.gross)}</td><td>${fmtN(it.ss)}</td><td>${fmtN(it.irs)}</td><td>${fmtN(it.net)}</td></tr>`;
+    }
+    rows += `<tr class="total"><td>Total</td><td>${fmtN(pay.gross)}</td><td>${fmtN(pay.ss)}</td><td>${fmtN(pay.irs)}</td><td>${fmtN(pay.net)}</td></tr></tbody>`;
+    $('payrollTable').innerHTML = rows;
+    $('tableUsed').textContent = `Withholding table: ${IRS.TABLE_LABELS[IRS.withholdingTableKey(p)]} (${REGION_NAMES[p.region]})` +
+      (p.dependents >= 3 ? ' · −1 p.p. for 3+ dependents' : '') +
+      (p.jovemYear ? ` · IRS Jovem: ${pct(IRS.jovemShare(p.jovemYear))} of each payment exempt` : '');
+
+    // Settlement: what was withheld vs the real (revised) 2026 liability
+    const joint = t26r.mode === 'joint';
+    const withheld = pay.irs + (joint ? IRS.spouseWithholding2026(p, true) : 0);
+    const liability = joint ? t26r.household.tax : t26r.userTax;
+    const diff = withheld - liability;
+    $('settlement').innerHTML = `<div class="scroll"><table>
+      <tr><td>IRS withheld in 2026${joint ? ' (you + spouse)' : ''}</td><td>${fmt(withheld)}</td></tr>
+      <tr><td>Final 2026 IRS with the new rates${joint ? ' (joint return)' : ''}</td><td>${fmt(liability)}</td></tr>
+      <tr class="total"><td>${diff >= 0 ? 'Expected refund' : 'Expected amount to pay'}</td><td class="${diff >= 0 ? 'pos' : 'neg'}">${fmt(Math.abs(diff))}</td></tr>
+      </table></div>
+      <p class="hint">Estimated settlement in mid-2027. It includes the part of the retroactive cut not already given back in November.</p>`;
+
+    $('kpis2027').innerHTML =
+      kpi('Gross / month', fmt(pay27.gross)) +
+      kpi('IRS (est.)', fmt(pay27.irs), pct(pay27.gross ? pay27.irs / pay27.gross : 0) + ' of gross') +
+      kpi('Social Security', fmt(pay27.ss)) +
+      kpi('Net / month (est.)', fmt(pay27.net), signed(pay27.net - reg.net) + ' vs 2026');
+  }
+
+  function renderAnnual(p, p27, ias27) {
+    const key = segState.annualRegime;
+    const prof = key === '2027' ? p27 : p;
+    const t = IRS.annualTax(prof, key, ias27);
+    const h = t.household;
+    const net = prof.gross - prof.gross * IRS.SS_RATE - t.userTax;
+    $('annualKpis').innerHTML =
+      kpi('Your annual IRS', fmt(t.userTax), t.regime.label) +
+      kpi('Effective rate', pct(prof.gross ? t.userTax / prof.gross : 0), 'of gross') +
+      kpi('Marginal bracket', h.marginalRate.toLocaleString('pt-PT') + '%', REGION_NAMES[prof.region]) +
+      kpi('Net / year', fmt0(net), fmt(net / prof.payments) + ' × ' + prof.payments);
+
+    $('filingBox').innerHTML = prof.status === 'married'
+      ? `<div class="callout">Joint return: <b>${fmt(t.jointTotal)}</b> · Separate returns: <b>${fmt(t.separateTotal)}</b> (household total).
+         <b>${t.best === 'joint' ? 'Joint' : 'Separate'}</b> is better by ${fmt(Math.abs(t.jointTotal - t.separateTotal))}.
+         Showing: <b>${t.mode}</b>${t.mode === 'joint' ? ` (your share ≈ ${fmt(t.userTax)})` : ''}.</div>`
+      : '';
+
+    const d = h.deductions;
+    const n = h.bases.length;
+    const line = (l, v, cls = '') => `<tr class="${cls}"><td>${l}</td><td>${v}</td></tr>`;
+    let s = '<tbody>';
+    s += line(n === 2 ? 'Gross income (household)' : 'Gross income', fmt(h.gross));
+    if (h.exempt) s += line('IRS Jovem exempt income', '−' + fmt(h.exempt));
+    s += line(`Specific deduction (max of ${fmt(t.regime.specificDeduction)} or Soc. Sec.)`, '−' + fmt(h.specific));
+    s += line('Taxable income (rendimento coletável)', fmt(h.taxable), 'total');
+    if (h.exempt) s += line('Taxable income used to set the rate (incl. exempt)', fmt(h.taxableFull));
+    if (n === 2) s += line('Marital quotient (÷ 2)', fmt(h.quotient));
+    s += line('Tax at progressive rates' + (h.solidarity ? ' (+ solidarity surcharge)' : ''), fmt(h.collect));
+    if (h.solidarity) s += line('…of which solidarity surcharge', fmt(h.solidarity));
+    if (d.dependents) s += line('Dependents deduction', '−' + fmt(d.dependents));
+    if (d.ascendants) s += line('Ascendants deduction', '−' + fmt(d.ascendants));
+    if (d.general) s += line('General family expenses', '−' + fmt(d.general));
+    if (d.health) s += line('Health expenses (15%)', '−' + fmt(d.health));
+    if (d.education) s += line('Education expenses (30%)', '−' + fmt(d.education));
+    if (d.rent) s += line('Rent (15%)', '−' + fmt(d.rent));
+    if (d.capReduction) s += line('Overall deduction cap (art. 78.º/7)', '+' + fmt(d.capReduction));
+    if (h.minExistenceApplied) s += line(`Minimum existence (${fmt(t.regime.minExistence)}) applied`, '✓');
+    s += line(n === 2 ? 'IRS due (household)' : 'IRS due', fmt(h.tax), 'total');
+    s += '</tbody>';
+    $('annualSteps').innerHTML = s;
+
+    let b = '<thead><tr><th>Bracket</th><th>Range</th><th>Rate</th><th>Income in bracket</th><th>Tax</th></tr></thead><tbody>';
+    for (const r of h.bracketDetail) {
+      const range = r.upper === Infinity ? `> ${fmt0(r.lower)}` : `${fmt0(r.lower)} – ${fmt0(r.upper)}`;
+      b += `<tr><td>${r.bracket}.º</td><td>${range}</td><td>${r.rate.toLocaleString('pt-PT')}%</td><td>${fmt(r.slice)}</td><td>${fmt(r.tax)}</td></tr>`;
+    }
+    b += '</tbody>';
+    $('annualBrackets').innerHTML = b;
+  }
+
+  function renderCompare(p, p27, pay, payNoCut, t26o, t26r, t27, pay27, ias27) {
+    const ss = p.gross * IRS.SS_RATE;
+    const ss27 = p27.gross * IRS.SS_RATE;
+    const cols = [
+      { l: '2026 original', g: p.gross, ss, t: t26o.userTax },
+      { l: '2026 + cut', g: p.gross, ss, t: t26r.userTax },
+      { l: '2027', g: p27.gross, ss: ss27, t: t27.userTax },
+    ];
+    const head = '<thead><tr><th>€</th>' + cols.map((c) => `<th>${c.l}</th>`).join('') + '</tr></thead>';
+    const r = (label, f, cls = '') => `<tr class="${cls}"><td>${label}</td>${cols.map((c) => `<td>${f(c)}</td>`).join('')}</tr>`;
+    const base = cols[0];
+    const net = (c) => c.g - c.ss - c.t;
+    $('compareAnnual').innerHTML = head + '<tbody>' +
+      r('Gross salary', (c) => fmtN0(c.g)) +
+      r('Annual IRS', (c) => fmtN(c.t)) +
+      r('Effective IRS rate', (c) => pct(c.g ? c.t / c.g : 0)) +
+      r('Net / year', (c) => fmtN(net(c)), 'total') +
+      r(`Avg. net / payment (÷${p.payments})`, (c) => fmtN(net(c) / p.payments)) +
+      r('IRS saved vs 2026 original', (c) => signedN(base.t - c.t)) +
+      '</tbody>';
+    $('compareHint').textContent = (p27.gross !== p.gross ? `2027 includes your ${$('raise').value}% raise. ` : '') +
+      (p.jovemYear ? `IRS Jovem moves to year ${p27.jovemYear || '— (ended)'} in 2027. ` : '') +
+      'Annual IRS is the final tax due (liquidação), not withholding.';
+
+    const reg = pay.rows[0], nov = pay.rows[10], novNo = payNoCut.rows[10], dec = pay.rows[11];
+    const pr = (l, a, cls = '') => `<tr class="${cls}"><td>${l}</td><td>${fmtN(a.gross)}</td><td>${fmtN(a.irs)}</td><td><b>${fmtN(a.net)}</b></td></tr>`;
+    $('comparePayslip').innerHTML =
+      '<thead><tr><th>Payslip</th><th>Gross €</th><th>IRS €</th><th>Net €</th></tr></thead><tbody>' +
+      pr('Jan–Oct 2026 (regular)', reg) +
+      pr('Nov 2026 — normal tables' + (p.payments === 14 ? ' (incl. Christmas)' : ''), novNo) +
+      pr('Nov 2026 — with 50% cut', nov, 'hl') +
+      `<tr><td>November gain</td><td></td><td></td><td>${signedN(nov.net - novNo.net)}</td></tr>` +
+      pr('Dec 2026 (back to normal)', dec) +
+      pr('2027 monthly (estimate)', pay27) +
+      `<tr><td>2027 vs 2026 regular month</td><td></td><td></td><td>${signedN(pay27.net - reg.net)}</td></tr>` +
+      '</tbody>';
+
+    const levels = [12000, 15000, 18000, 21000, 25000, 30000, 35000, 40000, 45000, 50000, 60000, 80000, 100000];
+    let lv = '<thead><tr><th>Gross/yr €</th><th>IRS 2026 €</th><th>Cut 2026</th><th>Nov. gain</th><th>IRS 2027 €</th><th>2027 saves</th></tr></thead><tbody>';
+    for (const g of levels) {
+      const q = { ...p, gross: g, jovemYear: 0 };
+      const o = IRS.annualTax(q, '2026-original', ias27).userTax;
+      const rv = IRS.annualTax(q, '2026-revised', ias27).userTax;
+      const n27 = IRS.annualTax({ ...q }, '2027', ias27).userTax;
+      const novGain = IRS.payroll2026(q, true).rows[10].net - IRS.payroll2026(q, false).rows[10].net;
+      const mine = Math.abs(g - p.gross) < 1;
+      lv += `<tr class="${mine ? 'hl' : ''}"><td>${fmtN0(g)}</td><td>${fmtN(o)}</td><td>${signedN(o - rv)}</td><td>${signedN(novGain)}</td><td>${fmtN(n27)}</td><td>${signedN(o - n27)}</td></tr>`;
+    }
+    $('compareLevels').innerHTML = lv + '</tbody>';
+  }
+
+  function renderBrackets(p, ias27) {
+    $('bracketRegion').textContent = REGION_NAMES[p.region];
+    const ro = IRS.regionalRates(IRS.RATES_2026_ORIGINAL, p.region);
+    const rr = IRS.regionalRates(IRS.RATES_2026_REVISED, p.region);
+    const range = (L, i) => i === 0 ? `≤ ${fmt0(L[0])}` : i < L.length ? `${fmt0(L[i - 1])} – ${fmt0(L[i])}` : `> ${fmt0(L[L.length - 1])}`;
+    let t = '<thead><tr><th>#</th><th>2026 range</th><th>2026 rate</th><th>Nov. cut</th><th>2027 range</th><th>2027 rate</th></tr></thead><tbody>';
+    for (let i = 0; i < 9; i++) {
+      const changed = ro[i] !== rr[i];
+      t += `<tr class="${changed ? 'hl' : ''}"><td>${i + 1}.º</td><td>${range(IRS.LIMITS_2026, i)}</td><td>${ro[i].toLocaleString('pt-PT')}%</td>
+        <td>${rr[i].toLocaleString('pt-PT')}%${changed ? ` <span class="pos">(−${(ro[i] - rr[i]).toLocaleString('pt-PT', { maximumFractionDigits: 2 })})</span>` : ''}</td>
+        <td>${range(IRS.LIMITS_2027, i)}</td><td>${rr[i].toLocaleString('pt-PT')}%</td></tr>`;
+    }
+    $('bracketTable').innerHTML = t + '</tbody>';
+
+    const r26 = IRS.regime('2026-revised'), r27 = IRS.regime('2027', ias27);
+    const pr = (l, a, b) => `<tr><td>${l}</td><td>${a}</td><td>${b}</td></tr>`;
+    $('paramTable').innerHTML = '<thead><tr><th></th><th>2026</th><th>2027</th></tr></thead><tbody>' +
+      pr('IAS', fmt(r26.ias), fmt(r27.ias) + ' *') +
+      pr('Specific deduction (8.54 × IAS)', fmt(r26.specificDeduction), fmt(r27.specificDeduction) + ' *') +
+      pr('Minimum existence', fmt0(r26.minExistence), fmt0(r27.minExistence)) +
+      pr('IRS Jovem cap (55 × IAS)', fmt(r26.jovemCap), fmt(r27.jovemCap) + ' *') +
+      pr('Solidarity surcharge', '2.5% 80k–250k · 5% > 250k', 'same') +
+      pr('Employee Social Security', '11%', '11%') +
+      '</tbody>';
+  }
+
+  render();
+  const initialTab = document.querySelector(`.tabs button[data-tab="${location.hash.slice(1)}"]`);
+  if (initialTab) initialTab.click();
+})();
+</script>
+</body>
+</html>
